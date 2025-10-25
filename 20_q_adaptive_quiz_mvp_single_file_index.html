@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>20Q Adaptive Quiz — MVP</title>
+  <style>
+    :root{
+      --bg:#0b1021;        /* deep indigo */
+      --panel:#12193a;     /* card background */
+      --ink:#e9ecff;       /* primary text */
+      --muted:#a7b0d8;     /* secondary text */
+      --accent:#7c9cff;    /* buttons & highlights */
+      --accent-2:#6be6b2;  /* success */
+      --warn:#ffcc66;      /* draw */
+      --bad:#ff7b7b;       /* incorrect */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji"; 
+      background: radial-gradient(80vw 80vh at 20% 10%, #18204b 0%, var(--bg) 60%);
+      color:var(--ink); display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+
+    .app{width:min(900px, 100%);}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(6px);
+      padding:28px; border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    }
+    h1{margin:0 0 6px 0; font-size:28px; letter-spacing:0.2px}
+    p.sub{margin:0; color:var(--muted)}
+
+    /* Start screen */
+    .stack{display:flex; flex-direction:column; gap:18px}
+    .start-cta{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+
+    button{appearance:none; border:none; cursor:pointer; border-radius:14px; padding:14px 18px; font-weight:650; letter-spacing:0.2px}
+    .btn{background:var(--accent); color:#0c1024; box-shadow: 0 8px 20px rgba(124,156,255,0.35)}
+    .btn.secondary{background:#1c2450; color:var(--ink); border:1px solid rgba(255,255,255,0.08)}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    .meta{display:flex; gap:16px; color:var(--muted); font-size:14px}
+
+    /* Quiz */
+    #quiz{display:none}
+    .row{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+    .progress{
+      width:100%; height:10px; background:#1b234a; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.06)
+    }
+    .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #b0c3ff)}
+
+    .qbox{margin-top:18px; padding:18px; border-radius:14px; background:#12193a; border:1px solid rgba(255,255,255,0.06)}
+    .qtext{font-size:22px; line-height:1.35}
+    .answer{margin-top:10px; padding:14px; border-radius:12px; background:#0f1532; color:#cfe1ff; display:none; border:1px dashed rgba(255,255,255,0.15)}
+
+    .controls{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+    .pill{flex:1; min-width:160px; display:flex; align-items:center; justify-content:center; gap:10px}
+    .pill.bad{background:rgba(255,123,123,.18); color:#ffdede; border:1px solid rgba(255,123,123,.45)}
+    .pill.draw{background:rgba(255,204,102,.14); color:#ffe7b8; border:1px solid rgba(255,204,102,.45)}
+    .pill.good{background:rgba(107,230,178,.13); color:#d6ffef; border:1px solid rgba(107,230,178,.45)}
+
+    .kbd{font: 600 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#0b112a; padding:2px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.1)}
+
+    /* Summary */
+    #summary{display:none}
+    .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:10px}
+    .stat{background:#111737; border:1px solid rgba(255,255,255,0.06); padding:14px; border-radius:14px; text-align:center}
+    .stat h3{margin:6px 0 0 0}
+
+    footer{margin-top:12px; color:var(--muted); font-size:12px}
+    a{color:#c3d1ff}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- START -->
+    <section id="start" class="card stack">
+      <div>
+        <h1>20Q Adaptive Quiz — MVP</h1>
+        <p class="sub">A fast, honest, self-marked quiz. No logins. No fluff.</p>
+      </div>
+      <div class="start-cta">
+        <button id="startBtn" class="btn">Start Quiz</button>
+        <button id="practiceBtn" class="btn secondary" title="Play without saving stats">Practice Mode</button>
+      </div>
+      <div class="meta">
+        <span>20 questions per round</span>
+        <span>Self-mark: <span class="kbd">1</span> wrong · <span class="kbd">2</span> mostly · <span class="kbd">3</span> correct</span>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="quiz" class="card">
+      <div class="row" style="margin-bottom:10px">
+        <div id="progressText">Question 1 of 20</div>
+        <div class="progress" aria-label="Progress"><div id="bar" class="bar"></div></div>
+      </div>
+
+      <div class="qbox">
+        <div id="qtext" class="qtext">Question text</div>
+        <div id="answer" class="answer">Answer text</div>
+      </div>
+
+      <div class="controls">
+        <button id="revealBtn" class="btn secondary" title="Show the answer (Space)">Show Answer</button>
+        <button id="wrongBtn" class="pill bad" title="Mark incorrect (1)">❌ Incorrect</button>
+        <button id="mostlyBtn" class="pill draw" title="Mark mostly correct (2)">⚪ Mostly</button>
+        <button id="correctBtn" class="pill good" title="Mark correct (3)">✅ Correct</button>
+      </div>
+      <footer>Shortcuts: <span class="kbd">Space</span> reveal · <span class="kbd">1</span>/<span class="kbd">2</span>/<span class="kbd">3</span> grade · <span class="kbd">Enter</span> next</footer>
+    </section>
+
+    <!-- SUMMARY -->
+    <section id="summary" class="card">
+      <h2>Round Summary</h2>
+      <div class="grid">
+        <div class="stat"><div>✅ Correct</div><h3 id="sCorrect">0</h3></div>
+        <div class="stat"><div>⚪ Mostly</div><h3 id="sMostly">0</h3></div>
+        <div class="stat"><div>❌ Incorrect</div><h3 id="sWrong">0</h3></div>
+      </div>
+      <p id="percentLine" style="margin-top:10px">Score: 0%</p>
+      <p id="quip" class="sub"></p>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
+        <button id="againBtn" class="btn">Play Again</button>
+        <button id="homeBtn" class="btn secondary">Back to Home</button>
+      </div>
+      <footer id="persistNote"></footer>
+    </section>
+  </div>
+
+  <script>
+    // =====================
+    //  DATA SOURCE (MVP)
+    // =====================
+    // For the playable prototype, we embed a small bank here.
+    // Later you can replace this with questions.json via fetch().
+    const defaultQuestions = [
+      {q:"What is the capital of France?", a:"Paris"},
+      {q:"What is 9 × 9?", a:"81"},
+      {q:"Who wrote '1984'?", a:"George Orwell"},
+      {q:"Chemical symbol for water?", a:"H₂O"},
+      {q:"Largest planet in our solar system?", a:"Jupiter"},
+      {q:"What language is primarily spoken in Brazil?", a:"Portuguese"},
+      {q:"What is the square root of 144?", a:"12"},
+      {q:"Who painted the Mona Lisa?", a:"Leonardo da Vinci"},
+      {q:"What year did World War II end?", a:"1945"},
+      {q:"Primary gas in Earth's atmosphere?", a:"Nitrogen (~78%)"},
+      {q:"Who discovered penicillin?", a:"Alexander Fleming"},
+      {q:"What is the capital of Japan?", a:"Tokyo"},
+      {q:"Fastest land animal?", a:"Cheetah"},
+      {q:"Binary of decimal 2?", a:"10"},
+      {q:"Who developed the theory of relativity?", a:"Albert Einstein"},
+      {q:"How many continents are there?", a:"Seven"},
+      {q:"First element on the periodic table?", a:"Hydrogen"},
+      {q:"What is the boiling point of water at sea level (°C)?", a:"100°C"},
+      {q:"Which ocean is the largest?", a:"Pacific Ocean"},
+      {q:"Author of 'Pride and Prejudice'?", a:"Jane Austen"},
+      {q:"What is the capital of Australia?", a:"Canberra"},
+      {q:"Planet known as the Red Planet?", a:"Mars"},
+      {q:"How many degrees in a right angle?", a:"90°"},
+      {q:"In computing, what does 'CPU' stand for?", a:"Central Processing Unit"},
+      {q:"Who is known as the Father of Geometry?", a:"Euclid"},
+      {q:"What is the hardest natural substance?", a:"Diamond"},
+      {q:"Currency of the United Kingdom?", a:"Pound sterling"},
+      {q:"Which organ pumps blood through the body?", a:"Heart"},
+      {q:"What is the smallest prime number?", a:"2"},
+      {q:"What gas do plants absorb for photosynthesis?", a:"Carbon dioxide"},
+      {q:"Who directed 'Jurassic Park' (1993)?", a:"Steven Spielberg"},
+      {q:"How many states are in the USA?", a:"50"},
+      {q:"What is 2³?", a:"8"},
+      {q:"Primary language of Egypt today?", a:"Arabic"},
+      {q:"Which metal is liquid at room temperature (common)?", a:"Mercury"},
+      {q:"Who composed the Fifth Symphony in C minor, Op. 67?", a:"Ludwig van Beethoven"},
+      {q:"What device measures atmospheric pressure?", a:"Barometer"},
+      {q:"How many letters in the Greek alphabet?", a:"24"}
+    ];
+
+    // =====================
+    //  STATE
+    // =====================
+    const ROUND_LEN = 20;
+    const state = {
+      practice:false,
+      pool: [],        // entire question bank
+      deck: [],        // 20 picked for this round
+      i: 0,            // index in deck
+      revealed:false,
+      tallies: {good:0, draw:0, bad:0},
+    };
+
+    // =====================
+    //  ELEMENTS
+    // =====================
+    const el = {
+      start: document.getElementById('start'),
+      quiz: document.getElementById('quiz'),
+      summary: document.getElementById('summary'),
+      startBtn: document.getElementById('startBtn'),
+      practiceBtn: document.getElementById('practiceBtn'),
+      revealBtn: document.getElementById('revealBtn'),
+      wrongBtn: document.getElementById('wrongBtn'),
+      mostlyBtn: document.getElementById('mostlyBtn'),
+      correctBtn: document.getElementById('correctBtn'),
+      againBtn: document.getElementById('againBtn'),
+      homeBtn: document.getElementById('homeBtn'),
+      qtext: document.getElementById('qtext'),
+      answer: document.getElementById('answer'),
+      progressText: document.getElementById('progressText'),
+      bar: document.getElementById('bar'),
+      sCorrect: document.getElementById('sCorrect'),
+      sMostly: document.getElementById('sMostly'),
+      sWrong: document.getElementById('sWrong'),
+      percentLine: document.getElementById('percentLine'),
+      persistNote: document.getElementById('persistNote'),
+      quip: document.getElementById('quip'),
+    };
+
+    // =====================
+    //  UTILITIES
+    // =====================
+    function sampleWithoutReplacement(arr, k){
+      const copy = arr.slice();
+      const out = [];
+      k = Math.min(k, copy.length);
+      for(let i=0;i<k;i++){
+        const j = i + Math.floor(Math.random()*(copy.length - i));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+        out.push(copy[i]);
+      }
+      return out;
+    }
+
+    function pickDeck(pool){
+      if(pool.length >= ROUND_LEN){
+        return sampleWithoutReplacement(pool, ROUND_LEN);
+      }
+      // If pool smaller than 20, allow repeats by cycling
+      const deck = [];
+      const shuffled = sampleWithoutReplacement(pool, pool.length);
+      while(deck.length < ROUND_LEN){
+        deck.push(...shuffled);
+      }
+      return deck.slice(0, ROUND_LEN);
+    }
+
+    function show(section){
+      el.start.style.display = section==='start' ? 'block' : 'none';
+      el.quiz.style.display = section==='quiz' ? 'block' : 'none';
+      el.summary.style.display = section==='summary' ? 'block' : 'none';
+    }
+
+    function renderProgress(){
+      el.progressText.textContent = `Question ${state.i+1} of ${ROUND_LEN}`;
+      const pct = ((state.i)/ROUND_LEN)*100;
+      el.bar.style.width = `${pct}%`;
+    }
+
+    function renderCard(){
+      const card = state.deck[state.i];
+      el.qtext.textContent = card.q;
+      el.answer.textContent = card.a;
+      el.answer.style.display = state.revealed ? 'block' : 'none';
+      el.revealBtn.disabled = state.revealed;
+      // grading disabled until revealed for integrity vibes
+      [el.wrongBtn, el.mostlyBtn, el.correctBtn].forEach(b=>b.disabled = !state.revealed);
+      renderProgress();
+    }
+
+    function next(){
+      state.i++;
+      state.revealed = false;
+      if(state.i >= ROUND_LEN){
+        finish();
+      } else {
+        renderCard();
+      }
+    }
+
+    function finish(){
+      show('summary');
+      const {good, draw, bad} = state.tallies;
+      el.sCorrect.textContent = good;
+      el.sMostly.textContent = draw;
+      el.sWrong.textContent = bad;
+      const score = Math.round(((good + 0.5*draw)/ROUND_LEN)*100);
+      el.percentLine.textContent = `Score: ${score}%`;
+
+      // lightweight quips
+      let quip = "";
+      if(score === 100) quip = "Flawless. You bent reality a little.";
+      else if(score >= 85) quip = "Strong performance. Brain doing cardio.";
+      else if(score >= 70) quip = "Solid. Keep the neurons caffeinated.";
+      else if(score >= 50) quip = "Respectable. The mountain awaits another climb.";
+      else quip = "Tough round. Honesty today is rating juice tomorrow.";
+      el.quip.textContent = quip;
+
+      if(!state.practice){
+        // Store last round in localStorage (optional persistence)
+        const payload = {ts: Date.now(), good, draw, bad, score};
+        try { localStorage.setItem('20q:lastRound', JSON.stringify(payload)); }
+        catch(e){}
+        const last = new Date(payload.ts).toLocaleString();
+        el.persistNote.innerHTML = `Saved locally — last round: <strong>${last}</strong>.`;
+      } else {
+        el.persistNote.textContent = "Practice Mode: results aren't saved.";
+      }
+    }
+
+    // =====================
+    //  FLOW
+    // =====================
+    function begin(practice=false){
+      state.practice = practice;
+      state.pool = window.__QUESTION_POOL || defaultQuestions;
+      state.deck = pickDeck(state.pool);
+      state.i = 0; state.revealed = false; state.tallies = {good:0, draw:0, bad:0};
+      show('quiz');
+      renderCard();
+    }
+
+    // =====================
+    //  EVENTS
+    // =====================
+    el.startBtn.addEventListener('click', ()=>begin(false));
+    el.practiceBtn.addEventListener('click', ()=>begin(true));
+    el.revealBtn.addEventListener('click', ()=>{ state.revealed = true; renderCard(); });
+    el.wrongBtn.addEventListener('click', ()=>{ state.tallies.bad++; next(); });
+    el.mostlyBtn.addEventListener('click', ()=>{ state.tallies.draw++; next(); });
+    el.correctBtn.addEventListener('click', ()=>{ state.tallies.good++; next(); });
+    el.againBtn.addEventListener('click', ()=>begin(false));
+    el.homeBtn.addEventListener('click', ()=>{ show('start'); });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e)=>{
+      if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+      if(el.quiz.style.display === 'block'){
+        if(!state.revealed && e.code === 'Space'){ e.preventDefault(); state.revealed = true; renderCard(); }
+        else if(state.revealed){
+          if(e.key === '1'){ state.tallies.bad++; next(); }
+          if(e.key === '2'){ state.tallies.draw++; next(); }
+          if(e.key === '3'){ state.tallies.good++; next(); }
+          if(e.key === 'Enter'){ next(); }
+        }
+      }
+    });
+
+    // =====================
+    //  OPTIONAL: Load external questions.json (drop next to this file)
+    //  To use it, create questions.json as an array: [{"q":"...","a":"..."}, ...]
+    //  Then uncomment the fetch block below. If fetch fails, falls back to defaultQuestions.
+    // =====================
+    /*
+    fetch('questions.json')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(list => { if(Array.isArray(list) && list.length){ window.__QUESTION_POOL = list; }})
+      .catch(()=>{})
+    */
+
+    // Boot to start screen
+    show('start');
+  </script>
+</body>
+</html>
