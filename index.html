@@ -5,193 +5,137 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>20Q Adaptive Quiz — MVP</title>
   <style>
-    :root {
-      --paper: #f7f2e8;
-      --ink: #2c231a;
-      --muted: #6f6054;
-      --accent: #c8b7a6;
-      --accent-dark: #9f8d7b;
-      --edge: #d7ccbe;
-      font-size: 16px;
-    }
+    :root { font-size: 16px; }
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: "Courier New", "Courier Prime", "IBM Plex Mono", monospace;
-      background: var(--paper);
-      color: var(--ink);
+      min-height: 100vh;
+      padding: 32px 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      background: #f8f5ec;
+      color: #201b16;
+      font-family: "Courier New", "Courier Prime", "IBM Plex Mono", monospace;
+      line-height: 1.65;
     }
 
-    .app { width: min(720px, 100%); }
+    .app { width: min(640px, 100%); }
     .card {
-      background: #fffdf7;
-      border: 2px solid var(--edge);
-      border-radius: 12px;
-      padding: 28px 24px;
-      box-shadow: 0 12px 30px rgba(46, 36, 26, 0.08);
-      position: relative;
-      overflow: hidden;
+      padding: 24px;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
-    .card::after {
-      content: "";
-      position: absolute;
-      inset: 18px 18px auto auto;
-      width: 40px;
-      height: 1px;
-      background: var(--edge);
-    }
-    h1 {
-      margin: 0 0 8px 0;
-      font-size: 1.75rem;
-      letter-spacing: 0.04em;
-    }
-    h2 {
+    h1, h2 {
       margin: 0;
-      font-size: 1.35rem;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.03em;
     }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
     p.sub {
       margin: 0;
-      color: var(--muted);
+      color: #5b5146;
       font-size: 0.95rem;
     }
 
-    .stack { display: flex; flex-direction: column; gap: 20px; }
-    .start-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stack { display: flex; flex-direction: column; gap: 18px; }
+    .start-cta { display: flex; gap: 10px; flex-wrap: wrap; }
 
     button {
       appearance: none;
-      border: 1px solid var(--ink);
+      border: 1px solid currentColor;
       background: transparent;
-      color: var(--ink);
+      color: inherit;
       cursor: pointer;
-      border-radius: 8px;
-      padding: 12px 16px;
+      padding: 10px 14px;
+      font: inherit;
       font-weight: 600;
-      letter-spacing: 0.06em;
-      transition: background 0.2s ease, transform 0.1s ease;
+      letter-spacing: 0.05em;
     }
-    button:active {
-      transform: translateY(1px);
+    button:hover:not(:disabled) {
+      background: #201b16;
+      color: #f8f5ec;
     }
-    .btn {
-      background: var(--accent);
-      border-color: var(--accent-dark);
+    .btn.primary {
+      background: #201b16;
+      color: #f8f5ec;
     }
-    .btn.secondary {
-      background: #fffdf7;
-    }
-    .btn:disabled, .pill:disabled {
-      opacity: 0.5;
+    button:disabled {
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
     .meta {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      color: var(--muted);
+      gap: 4px;
+      color: #5b5146;
       font-size: 0.9rem;
     }
 
     #quiz { display: none; }
-    .row {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .row { display: flex; flex-direction: column; gap: 6px; }
     .progress {
       width: 100%;
-      height: 6px;
-      background: #ede5d9;
-      border-radius: 999px;
-      overflow: hidden;
-      border: 1px solid var(--edge);
+      height: 4px;
+      border: 1px solid currentColor;
+      background: transparent;
     }
     .bar {
       height: 100%;
       width: 0%;
-      background: var(--accent-dark);
+      background: currentColor;
     }
 
-    .qbox {
-      margin-top: 20px;
-      padding: 18px;
-      border: 1px dashed var(--edge);
-      border-radius: 10px;
-      background: #fffcf5;
-    }
+    .qbox { padding: 0; margin-top: 10px; }
     .qtext {
-      font-size: 1.3rem;
-      line-height: 1.5;
+      font-size: 1.2rem;
+      line-height: 1.7;
       margin: 0;
     }
 
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 18px;
-    }
-    .answer-block {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .controls { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+    .answer-block { display: flex; flex-direction: column; gap: 10px; }
     .answer {
-      padding: 14px;
-      border-radius: 8px;
-      border: 1px solid var(--edge);
-      background: #fffdf7;
-      display: none;
-      color: var(--ink);
-      line-height: 1.45;
+      border-top: 1px solid currentColor;
+      padding-top: 12px;
+      min-height: 1.6em;
+      font-style: italic;
+      letter-spacing: 0.03em;
     }
-    .grading {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .answer.hidden { opacity: 0; }
+
+    .grading { display: flex; flex-direction: column; gap: 10px; }
     @media (min-width: 540px) {
       .grading { flex-direction: row; }
       .grading button { flex: 1; }
     }
+
     .pill {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      background: #fffdf7;
-      border: 1px solid var(--edge);
     }
-    .pill.bad { background: #ffeae6; }
-    .pill.draw { background: #fff5da; }
-    .pill.good { background: #eaf4e8; }
 
     #summary { display: none; }
     .grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
+      gap: 8px;
     }
     .stat {
-      border: 1px solid var(--edge);
-      border-radius: 8px;
-      padding: 12px;
+      border: 1px solid currentColor;
+      padding: 10px;
       text-align: center;
-      background: #fffdf7;
     }
     .stat h3 { margin: 6px 0 0 0; }
 
     footer {
-      margin-top: 16px;
-      color: var(--muted);
+      margin-top: 12px;
+      color: #5b5146;
       font-size: 0.85rem;
     }
     a { color: inherit; }
@@ -206,8 +150,8 @@
         <p class="sub">A fast, honest, self-marked quiz. No logins. No fluff.</p>
       </div>
       <div class="start-cta">
-        <button id="startBtn" class="btn">Start Quiz</button>
-        <button id="practiceBtn" class="btn secondary" title="Play without saving stats">Practice Mode</button>
+        <button id="startBtn" class="btn primary">Start Quiz</button>
+        <button id="practiceBtn" class="btn" title="Play without saving stats">Practice Mode</button>
       </div>
       <div class="meta">
         <span>20 questions per round</span>
@@ -228,8 +172,8 @@
 
       <div class="controls">
         <div class="answer-block">
-          <button id="revealBtn" class="btn secondary" title="Show the answer">Show Answer</button>
-          <div id="answer" class="answer">Answer text</div>
+          <button id="revealBtn" class="btn" title="Show the answer">Show Answer</button>
+          <div id="answer" class="answer hidden" aria-hidden="true">&nbsp;</div>
         </div>
         <div class="grading">
           <button id="wrongBtn" class="pill bad" title="Mark incorrect">❌ Incorrect</button>
@@ -251,8 +195,8 @@
       <p id="percentLine" style="margin-top:10px">Score: 0%</p>
       <p id="quip" class="sub"></p>
       <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
-        <button id="againBtn" class="btn">Play Again</button>
-        <button id="homeBtn" class="btn secondary">Back to Home</button>
+        <button id="againBtn" class="btn primary">Play Again</button>
+        <button id="homeBtn" class="btn">Back to Home</button>
       </div>
       <footer id="persistNote"></footer>
     </section>
@@ -388,8 +332,15 @@
     function renderCard(){
       const card = state.deck[state.i];
       el.qtext.textContent = card.q;
-      el.answer.textContent = card.a;
-      el.answer.style.display = state.revealed ? 'block' : 'none';
+      if(state.revealed){
+        el.answer.textContent = card.a;
+        el.answer.classList.remove('hidden');
+        el.answer.setAttribute('aria-hidden', 'false');
+      } else {
+        el.answer.textContent = '\u00A0';
+        el.answer.classList.add('hidden');
+        el.answer.setAttribute('aria-hidden', 'true');
+      }
       el.revealBtn.disabled = state.revealed;
       // grading disabled until revealed for integrity vibes
       [el.wrongBtn, el.mostlyBtn, el.correctBtn].forEach(b=>b.disabled = !state.revealed);
