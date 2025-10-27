@@ -5,73 +5,196 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>20Q Adaptive Quiz — MVP</title>
   <style>
-    :root{
-      --bg:#0b1021;        /* deep indigo */
-      --panel:#12193a;     /* card background */
-      --ink:#e9ecff;       /* primary text */
-      --muted:#a7b0d8;     /* secondary text */
-      --accent:#7c9cff;    /* buttons & highlights */
-      --accent-2:#6be6b2;  /* success */
-      --warn:#ffcc66;      /* draw */
-      --bad:#ff7b7b;       /* incorrect */
+    :root {
+      --paper: #f7f2e8;
+      --ink: #2c231a;
+      --muted: #6f6054;
+      --accent: #c8b7a6;
+      --accent-dark: #9f8d7b;
+      --edge: #d7ccbe;
+      font-size: 16px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji"; 
-      background: radial-gradient(80vw 80vh at 20% 10%, #18204b 0%, var(--bg) 60%);
-      color:var(--ink); display:flex; align-items:center; justify-content:center; padding:24px;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Courier New", "Courier Prime", "IBM Plex Mono", monospace;
+      background: var(--paper);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
 
-    .app{width:min(900px, 100%);}
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border:1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(6px);
-      padding:28px; border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    .app { width: min(720px, 100%); }
+    .card {
+      background: #fffdf7;
+      border: 2px solid var(--edge);
+      border-radius: 12px;
+      padding: 28px 24px;
+      box-shadow: 0 12px 30px rgba(46, 36, 26, 0.08);
+      position: relative;
+      overflow: hidden;
     }
-    h1{margin:0 0 6px 0; font-size:28px; letter-spacing:0.2px}
-    p.sub{margin:0; color:var(--muted)}
-
-    /* Start screen */
-    .stack{display:flex; flex-direction:column; gap:18px}
-    .start-cta{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
-
-    button{appearance:none; border:none; cursor:pointer; border-radius:14px; padding:14px 18px; font-weight:650; letter-spacing:0.2px}
-    .btn{background:var(--accent); color:#0c1024; box-shadow: 0 8px 20px rgba(124,156,255,0.35)}
-    .btn.secondary{background:#1c2450; color:var(--ink); border:1px solid rgba(255,255,255,0.08)}
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-
-    .meta{display:flex; gap:16px; color:var(--muted); font-size:14px}
-
-    /* Quiz */
-    #quiz{display:none}
-    .row{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
-    .progress{
-      width:100%; height:10px; background:#1b234a; border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.06)
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 18px 18px auto auto;
+      width: 40px;
+      height: 1px;
+      background: var(--edge);
     }
-    .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #b0c3ff)}
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.75rem;
+      letter-spacing: 0.04em;
+    }
+    h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: 0.05em;
+    }
+    p.sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
 
-    .qbox{margin-top:18px; padding:18px; border-radius:14px; background:#12193a; border:1px solid rgba(255,255,255,0.06)}
-    .qtext{font-size:22px; line-height:1.35}
-    .answer{margin-top:10px; padding:14px; border-radius:12px; background:#0f1532; color:#cfe1ff; display:none; border:1px dashed rgba(255,255,255,0.15)}
+    .stack { display: flex; flex-direction: column; gap: 20px; }
+    .start-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
-    .controls{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
-    .pill{flex:1; min-width:160px; display:flex; align-items:center; justify-content:center; gap:10px}
-    .pill.bad{background:rgba(255,123,123,.18); color:#ffdede; border:1px solid rgba(255,123,123,.45)}
-    .pill.draw{background:rgba(255,204,102,.14); color:#ffe7b8; border:1px solid rgba(255,204,102,.45)}
-    .pill.good{background:rgba(107,230,178,.13); color:#d6ffef; border:1px solid rgba(107,230,178,.45)}
+    button {
+      appearance: none;
+      border: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    .btn {
+      background: var(--accent);
+      border-color: var(--accent-dark);
+    }
+    .btn.secondary {
+      background: #fffdf7;
+    }
+    .btn:disabled, .pill:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-    .kbd{font: 600 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#0b112a; padding:2px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.1)}
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
 
-    /* Summary */
-    #summary{display:none}
-    .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:10px}
-    .stat{background:#111737; border:1px solid rgba(255,255,255,0.06); padding:14px; border-radius:14px; text-align:center}
-    .stat h3{margin:6px 0 0 0}
+    #quiz { display: none; }
+    .row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .progress {
+      width: 100%;
+      height: 6px;
+      background: #ede5d9;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--edge);
+    }
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-dark);
+    }
 
-    footer{margin-top:12px; color:var(--muted); font-size:12px}
-    a{color:#c3d1ff}
+    .qbox {
+      margin-top: 20px;
+      padding: 18px;
+      border: 1px dashed var(--edge);
+      border-radius: 10px;
+      background: #fffcf5;
+    }
+    .qtext {
+      font-size: 1.3rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .answer-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .answer {
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--edge);
+      background: #fffdf7;
+      display: none;
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    .grading {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    @media (min-width: 540px) {
+      .grading { flex-direction: row; }
+      .grading button { flex: 1; }
+    }
+    .pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #fffdf7;
+      border: 1px solid var(--edge);
+    }
+    .pill.bad { background: #ffeae6; }
+    .pill.draw { background: #fff5da; }
+    .pill.good { background: #eaf4e8; }
+
+    #summary { display: none; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .stat {
+      border: 1px solid var(--edge);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      background: #fffdf7;
+    }
+    .stat h3 { margin: 6px 0 0 0; }
+
+    footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    a { color: inherit; }
   </style>
 </head>
 <body>
@@ -88,7 +211,7 @@
       </div>
       <div class="meta">
         <span>20 questions per round</span>
-        <span>Self-mark: <span class="kbd">1</span> wrong · <span class="kbd">2</span> mostly · <span class="kbd">3</span> correct</span>
+        <span>Mark each answer after you reveal it. Tally stays on your device.</span>
       </div>
     </section>
 
@@ -101,16 +224,20 @@
 
       <div class="qbox">
         <div id="qtext" class="qtext">Question text</div>
-        <div id="answer" class="answer">Answer text</div>
       </div>
 
       <div class="controls">
-        <button id="revealBtn" class="btn secondary" title="Show the answer (Space)">Show Answer</button>
-        <button id="wrongBtn" class="pill bad" title="Mark incorrect (1)">❌ Incorrect</button>
-        <button id="mostlyBtn" class="pill draw" title="Mark mostly correct (2)">⚪ Mostly</button>
-        <button id="correctBtn" class="pill good" title="Mark correct (3)">✅ Correct</button>
+        <div class="answer-block">
+          <button id="revealBtn" class="btn secondary" title="Show the answer">Show Answer</button>
+          <div id="answer" class="answer">Answer text</div>
+        </div>
+        <div class="grading">
+          <button id="wrongBtn" class="pill bad" title="Mark incorrect">❌ Incorrect</button>
+          <button id="mostlyBtn" class="pill draw" title="Mark mostly correct">⚪ Mostly correct</button>
+          <button id="correctBtn" class="pill good" title="Mark correct">✅ Correct</button>
+        </div>
       </div>
-      <footer>Shortcuts: <span class="kbd">Space</span> reveal · <span class="kbd">1</span>/<span class="kbd">2</span>/<span class="kbd">3</span> grade · <span class="kbd">Enter</span> next</footer>
+      <footer>Tip: answer honestly, then mark yourself. Your history lives only on this device.</footer>
     </section>
 
     <!-- SUMMARY -->
@@ -118,7 +245,7 @@
       <h2>Round Summary</h2>
       <div class="grid">
         <div class="stat"><div>✅ Correct</div><h3 id="sCorrect">0</h3></div>
-        <div class="stat"><div>⚪ Mostly</div><h3 id="sMostly">0</h3></div>
+        <div class="stat"><div>⚪ Mostly correct</div><h3 id="sMostly">0</h3></div>
         <div class="stat"><div>❌ Incorrect</div><h3 id="sWrong">0</h3></div>
       </div>
       <p id="percentLine" style="margin-top:10px">Score: 0%</p>
@@ -332,20 +459,6 @@
     el.correctBtn.addEventListener('click', ()=>{ state.tallies.good++; next(); });
     el.againBtn.addEventListener('click', ()=>begin(false));
     el.homeBtn.addEventListener('click', ()=>{ show('start'); });
-
-    // Keyboard shortcuts
-    window.addEventListener('keydown', (e)=>{
-      if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-      if(el.quiz.style.display === 'block'){
-        if(!state.revealed && e.code === 'Space'){ e.preventDefault(); state.revealed = true; renderCard(); }
-        else if(state.revealed){
-          if(e.key === '1'){ state.tallies.bad++; next(); }
-          if(e.key === '2'){ state.tallies.draw++; next(); }
-          if(e.key === '3'){ state.tallies.good++; next(); }
-          if(e.key === 'Enter'){ next(); }
-        }
-      }
-    });
 
     // =====================
     //  OPTIONAL: Load external questions.json (drop next to this file)
