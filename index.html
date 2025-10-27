@@ -8,22 +8,14 @@
     :root { font-size: 16px; }
     * { box-sizing: border-box; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 32px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f8f5ec;
-      color: #201b16;
+      margin: 24px;
+      max-width: 640px;
       font-family: "Courier New", "Courier Prime", "IBM Plex Mono", monospace;
       line-height: 1.65;
+      color: #201b16;
     }
 
-    .app { width: min(640px, 100%); }
     .card {
-      padding: 24px;
-      background: transparent;
       display: flex;
       flex-direction: column;
       gap: 18px;
@@ -36,31 +28,22 @@
     h2 { font-size: 1.3rem; }
     p.sub {
       margin: 0;
-      color: #5b5146;
       font-size: 0.95rem;
     }
 
     .stack { display: flex; flex-direction: column; gap: 18px; }
-    .start-cta { display: flex; gap: 10px; flex-wrap: wrap; }
+    .start-cta { display: flex; gap: 14px; flex-wrap: wrap; }
 
     button {
       appearance: none;
-      border: 1px solid currentColor;
-      background: transparent;
+      border: none;
+      background: none;
       color: inherit;
       cursor: pointer;
-      padding: 10px 14px;
+      padding: 0;
       font: inherit;
       font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-    button:hover:not(:disabled) {
-      background: #201b16;
-      color: #f8f5ec;
-    }
-    .btn.primary {
-      background: #201b16;
-      color: #f8f5ec;
+      letter-spacing: 0.03em;
     }
     button:disabled {
       opacity: 0.4;
@@ -71,23 +54,12 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      color: #5b5146;
       font-size: 0.9rem;
     }
 
     #quiz { display: none; }
+    #summary { display: none; }
     .row { display: flex; flex-direction: column; gap: 6px; }
-    .progress {
-      width: 100%;
-      height: 4px;
-      border: 1px solid currentColor;
-      background: transparent;
-    }
-    .bar {
-      height: 100%;
-      width: 0%;
-      background: currentColor;
-    }
 
     .qbox { padding: 0; margin-top: 10px; }
     .qtext {
@@ -99,8 +71,6 @@
     .controls { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
     .answer-block { display: flex; flex-direction: column; gap: 10px; }
     .answer {
-      border-top: 1px solid currentColor;
-      padding-top: 12px;
       min-height: 1.6em;
       font-style: italic;
       letter-spacing: 0.03em;
@@ -113,32 +83,10 @@
       .grading button { flex: 1; }
     }
 
-    .pill {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    #summary { display: none; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .stat {
-      border: 1px solid currentColor;
-      padding: 10px;
-      text-align: center;
-    }
-    .stat h3 { margin: 6px 0 0 0; }
-
     footer {
       margin-top: 12px;
-      color: #5b5146;
       font-size: 0.85rem;
     }
-    a { color: inherit; }
   </style>
 </head>
 <body>
@@ -163,7 +111,6 @@
     <section id="quiz" class="card">
       <div class="row" style="margin-bottom:10px">
         <div id="progressText">Question 1 of 20</div>
-        <div class="progress" aria-label="Progress"><div id="bar" class="bar"></div></div>
       </div>
 
       <div class="qbox">
@@ -187,11 +134,9 @@
     <!-- SUMMARY -->
     <section id="summary" class="card">
       <h2>Round Summary</h2>
-      <div class="grid">
-        <div class="stat"><div>✅ Correct</div><h3 id="sCorrect">0</h3></div>
-        <div class="stat"><div>⚪ Mostly correct</div><h3 id="sMostly">0</h3></div>
-        <div class="stat"><div>❌ Incorrect</div><h3 id="sWrong">0</h3></div>
-      </div>
+      <p>✅ Correct: <span id="sCorrect">0</span></p>
+      <p>⚪ Mostly correct: <span id="sMostly">0</span></p>
+      <p>❌ Incorrect: <span id="sWrong">0</span></p>
       <p id="percentLine" style="margin-top:10px">Score: 0%</p>
       <p id="quip" class="sub"></p>
       <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
@@ -280,7 +225,6 @@
       qtext: document.getElementById('qtext'),
       answer: document.getElementById('answer'),
       progressText: document.getElementById('progressText'),
-      bar: document.getElementById('bar'),
       sCorrect: document.getElementById('sCorrect'),
       sMostly: document.getElementById('sMostly'),
       sWrong: document.getElementById('sWrong'),
@@ -325,8 +269,6 @@
 
     function renderProgress(){
       el.progressText.textContent = `Question ${state.i+1} of ${ROUND_LEN}`;
-      const pct = ((state.i)/ROUND_LEN)*100;
-      el.bar.style.width = `${pct}%`;
     }
 
     function renderCard(){
