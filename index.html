@@ -18,6 +18,23 @@
       --accent-1: #c48350;
       --accent-2: #f0d9c3;
       --accent-3: #8f6b4f;
+      --color-text: #201b16;
+      --color-muted: #5b5146;
+      --color-soft-stroke: rgba(91, 81, 70, 0.25);
+      --surface-body: #f8f5ec;
+      --surface-button: #fff4eb;
+      --surface-button-hover: #ffe9da;
+      --surface-button-primary: #e4f2eb;
+      --surface-button-primary-hover: #d4e7df;
+      --surface-progress: #fff6ef;
+      --surface-stat: #f6f2ea;
+      --surface-pill-bad: #ffe9e5;
+      --surface-pill-draw: #f0f1ff;
+      --surface-pill-good: #e7f4ea;
+      --color-pill-bad: #b53a30;
+      --color-pill-draw: #45408a;
+      --color-pill-good: #2c6746;
+      --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.05);
     }
     * { box-sizing: border-box; }
     body {
@@ -32,6 +49,10 @@
       font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-weight: 400;
       line-height: 1.75;
+      background: var(--surface-body);
+      color: var(--color-text);
+      font-family: "Courier New", "Courier Prime", "IBM Plex Mono", monospace;
+      line-height: 1.65;
     }
 
     .app {
@@ -40,10 +61,14 @@
     }
     .card {
       padding: 24px;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(32, 27, 22, 0.18);
+      border-radius: 18px;
       display: flex;
       flex-direction: column;
       gap: 18px;
+      opacity: 0;
+      transform: translateY(16px);
     }
     h1, h2 {
       margin: 0;
@@ -62,22 +87,33 @@
     p.sub {
       margin: 0;
       color: var(--accent-3);
+      color: var(--color-muted);
       font-size: 0.95rem;
     }
 
     .stack { display: flex; flex-direction: column; gap: 18px; }
     .start-cta { display: flex; gap: 10px; flex-wrap: wrap; }
 
+    button,
+    .answer,
+    .card {
+      transition: background-color 180ms ease, transform 180ms ease,
+        opacity 200ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
     button {
       appearance: none;
-      border: 1px solid currentColor;
-      background: transparent;
-      color: inherit;
+      border: 1px solid var(--color-soft-stroke);
+      background: var(--surface-button);
+      color: var(--color-text);
       cursor: pointer;
       padding: 10px 14px;
       font: inherit;
       font-weight: 600;
       letter-spacing: 0.05em;
+      border-radius: 6px;
+      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
+        transform 0.2s ease;
     }
     button:hover:not(:disabled) {
       background: var(--text);
@@ -86,6 +122,31 @@
     .btn.primary {
       background: var(--text);
       color: var(--surface);
+      background: var(--surface-button-hover);
+      box-shadow: var(--shadow-soft);
+      transform: translateY(-1px);
+    button:hover:not(:disabled),
+    button:focus-visible:not(:disabled) {
+      background: #201b16;
+      color: #f8f5ec;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(32, 27, 22, 0.18);
+    }
+    .btn.primary {
+      background: var(--surface-button-primary);
+      color: var(--color-pill-good);
+    }
+    .btn.primary:hover:not(:disabled) {
+      background: var(--surface-button-primary-hover);
+      color: var(--color-pill-good);
+    }
+    button:focus-visible {
+      outline: 3px solid #d2c1a5;
+      outline-offset: 2px;
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(32, 27, 22, 0.18);
     }
     button:disabled {
       opacity: 0.4;
@@ -97,21 +158,38 @@
       flex-direction: column;
       gap: 4px;
       color: var(--accent-3);
+      color: var(--color-muted);
       font-size: 0.9rem;
     }
 
-    #quiz { display: none; }
+    .card.is-active {
+      animation: section-enter 320ms ease forwards;
+      box-shadow: 0 18px 36px rgba(32, 27, 22, 0.18);
+    }
+    .card.is-active:hover,
+    .card.is-active:focus-within {
+      box-shadow: 0 26px 52px rgba(32, 27, 22, 0.2);
+    }
+    .card.is-hidden {
+      display: none;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: none;
+      box-shadow: none;
+    }
     .row { display: flex; flex-direction: column; gap: 6px; }
     .progress {
       width: 100%;
-      height: 4px;
-      border: 1px solid currentColor;
-      background: transparent;
+      height: 8px;
+      border: 1px solid var(--color-soft-stroke);
+      background: var(--surface-progress);
+      border-radius: 6px;
+      overflow: hidden;
     }
     .bar {
       height: 100%;
       width: 0%;
-      background: currentColor;
+      background: var(--color-pill-good);
     }
 
     .qbox { padding: 0; margin-top: 10px; }
@@ -124,13 +202,18 @@
     .controls { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
     .answer-block { display: flex; flex-direction: column; gap: 10px; }
     .answer {
-      border-top: 1px solid currentColor;
+      border-top: 1px solid var(--color-soft-stroke);
       padding-top: 12px;
       min-height: 1.6em;
       font-style: italic;
       letter-spacing: 0.03em;
+      opacity: 1;
+      transform: translateY(0);
     }
-    .answer.hidden { opacity: 0; }
+    .answer.hidden {
+      opacity: 0;
+      transform: translateY(6px);
+    }
 
     .grading { display: flex; flex-direction: column; gap: 10px; }
     @media (min-width: 540px) {
@@ -143,33 +226,81 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--color-soft-stroke);
+    }
+    .pill.bad {
+      background: var(--surface-pill-bad);
+      color: var(--color-pill-bad);
+    }
+    .pill.draw {
+      background: var(--surface-pill-draw);
+      color: var(--color-pill-draw);
+    }
+    .pill.good {
+      background: var(--surface-pill-good);
+      color: var(--color-pill-good);
+    }
+    .pill:hover:not(:disabled) {
+      box-shadow: var(--shadow-soft);
+      filter: brightness(0.98);
     }
 
-    #summary { display: none; }
     .grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
     .stat {
-      border: 1px solid currentColor;
+      border: 1px solid var(--color-soft-stroke);
       padding: 10px;
       text-align: center;
+      background: var(--surface-stat);
+      border-radius: 6px;
     }
-    .stat h3 { margin: 6px 0 0 0; }
+    .stat div:first-child {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .grid .stat:nth-child(1) div:first-child {
+      color: var(--color-pill-good);
+    }
+    .grid .stat:nth-child(2) div:first-child {
+      color: var(--color-pill-draw);
+    }
+    .grid .stat:nth-child(3) div:first-child {
+      color: var(--color-pill-bad);
+    }
+    .stat h3 { margin: 6px 0 0 0; color: var(--color-text); }
 
     footer {
       margin-top: 12px;
-      color: #5b5146;
+      color: var(--color-muted);
       font-size: 0.85rem;
     }
     a { color: inherit; }
+
+    @keyframes section-enter {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      button,
+      .answer,
+      .card {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+      .card { transform: none; }
+      .answer.hidden { transform: none; }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <!-- START -->
-    <section id="start" class="card stack">
+    <section id="start" class="card stack is-active" aria-hidden="false">
       <div>
         <h1>20Q Adaptive Quiz — MVP</h1>
         <p class="sub">A fast, honest, self-marked quiz. No logins. No fluff.</p>
@@ -185,7 +316,7 @@
     </section>
 
     <!-- QUIZ -->
-    <section id="quiz" class="card">
+    <section id="quiz" class="card is-hidden" aria-hidden="true">
       <div class="row" style="margin-bottom:10px">
         <div id="progressText">Question 1 of 20</div>
         <div class="progress" aria-label="Progress"><div id="bar" class="bar"></div></div>
@@ -210,7 +341,7 @@
     </section>
 
     <!-- SUMMARY -->
-    <section id="summary" class="card">
+    <section id="summary" class="card is-hidden" aria-hidden="true">
       <h2>Round Summary</h2>
       <div class="grid">
         <div class="stat"><div>✅ Correct</div><h3 id="sCorrect">0</h3></div>
@@ -343,9 +474,20 @@
     }
 
     function show(section){
-      el.start.style.display = section==='start' ? 'block' : 'none';
-      el.quiz.style.display = section==='quiz' ? 'block' : 'none';
-      el.summary.style.display = section==='summary' ? 'block' : 'none';
+      ['start', 'quiz', 'summary'].forEach(id => {
+        const node = el[id];
+        const isTarget = id === section;
+        node.setAttribute('aria-hidden', (!isTarget).toString());
+        if(isTarget){
+          node.classList.remove('is-hidden');
+          node.classList.remove('is-active');
+          void node.offsetWidth;
+          node.classList.add('is-active');
+        } else {
+          node.classList.add('is-hidden');
+          node.classList.remove('is-active');
+        }
+      });
     }
 
     function renderProgress(){
